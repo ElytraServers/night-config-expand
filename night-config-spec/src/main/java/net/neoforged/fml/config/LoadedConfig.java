@@ -1,22 +1,13 @@
-/*
- * Copyright (c) NeoForged and contributors
- * SPDX-License-Identifier: LGPL-2.1-only
- */
-
 package net.neoforged.fml.config;
 
+import cn.elytra.nightconfig.Configuration;
 import com.electronwill.nightconfig.core.CommentedConfig;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
-@Deprecated
-record LoadedConfig(CommentedConfig config, @Nullable Path path,
-                    ModConfig modConfig) implements IConfigSpec.ILoadedConfig {
+public record LoadedConfig(CommentedConfig config, Path path) implements IConfigSpec.ILoadedConfig {
     @Override
     public void save() {
-        if (path != null) {
-            ConfigTracker.writeConfig(path, config);
-        }
+        Configuration.writeConfig(path, config);
     }
 }

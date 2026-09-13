@@ -13,7 +13,7 @@ import com.electronwill.nightconfig.toml.TomlFormat;
 import com.electronwill.nightconfig.toml.TomlParser;
 import com.electronwill.nightconfig.toml.TomlWriter;
 import net.neoforged.fml.config.IConfigSpec;
-import net.neoforged.fml.config.SimpleLoadedConfig;
+import net.neoforged.fml.config.LoadedConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -99,7 +99,7 @@ public final class Configuration {
             }
         }
 
-        spec.acceptConfig(new SimpleLoadedConfig(config, path));
+        spec.acceptConfig(new LoadedConfig(config, path));
         return config;
     }
 

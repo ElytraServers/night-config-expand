@@ -13,7 +13,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import net.neoforged.fml.config.IConfigSpec;
-import net.neoforged.fml.config.ModConfig;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
@@ -100,27 +99,6 @@ public class ModConfigSpec implements IConfigSpec {
 
             config.save();
         }
-        this.afterReload();
-    }
-
-    @Deprecated
-    @Override
-    public void validateSpec(ModConfig config) {
-        forEachValue(getValues().valueMap().values(), configValue -> {
-            if (!configValue.getSpec().restartType().isValid(config.getType())) {
-                throw new IllegalArgumentException("Configuration value " + String.join(".", configValue.getPath())
-                        + " defined in config " + config.getFileName() + " has restart of type " + configValue.getSpec().restartType() + " which cannot be used for configs of type " + config.getType());
-            }
-            // Check that the spec's validator accepts its own default value
-            if (!configValue.getSpec().test(configValue.getDefault())) {
-                throw new IllegalArgumentException("Configuration value "
-                        + String.join(".", configValue.getPath())
-                        + " defined in config "
-                        + config.getFileName()
-                        + " has a validator that does not accept its own default value of "
-                        + configValue.getDefault());
-            }
-        });
     }
 
     public boolean isLoaded() {
@@ -151,20 +129,6 @@ public class ModConfigSpec implements IConfigSpec {
                 consumer.accept(configValue);
             } else if (value instanceof Config innerConfig) {
                 forEachValue(innerConfig.valueMap().values(), consumer);
-            }
-        });
-    }
-
-    public void afterReload() {
-        // Only clear the caches of configs that don't need a restart
-        this.resetCaches(RestartType.NONE);
-    }
-
-    @ApiStatus.Internal
-    public void resetCaches(RestartType restartType) {
-        forEachValue(getValues().valueMap().values(), configValue -> {
-            if (configValue.getSpec().restartType == restartType) {
-                configValue.clearCache();
             }
         });
     }
@@ -825,23 +789,6 @@ public class ModConfigSpec implements IConfigSpec {
             return this;
         }
 
-        /**
-         * Config values marked as needing a world restart will not reset their {@linkplain ConfigValue#get() cached value} until they are unloaded
-         * (i.e. when a world is closed).
-         */
-        public Builder worldRestart() {
-            context.worldRestart();
-            return this;
-        }
-
-        /**
-         * Config values marked as needing a game restart will never reset their {@linkplain ConfigValue#get() cached value}.
-         */
-        public Builder gameRestart() {
-            context.gameRestart();
-            return this;
-        }
-
         public Builder push(String path) {
             return push(split(path));
         }
@@ -894,7 +841,6 @@ public class ModConfigSpec implements IConfigSpec {
         private String langKey;
         @Nullable
         private Range<?> range;
-        private RestartType restartType = RestartType.NONE;
         @Nullable
         private Class<?> clazz;
 
@@ -951,18 +897,6 @@ public class ModConfigSpec implements IConfigSpec {
             return (Range<V>) this.range;
         }
 
-        public void worldRestart() {
-            this.restartType = RestartType.WORLD;
-        }
-
-        public void gameRestart() {
-            this.restartType = RestartType.GAME;
-        }
-
-        public RestartType restartType() {
-            return restartType;
-        }
-
         public void setClazz(@Nullable Class<?> clazz) {
             this.clazz = clazz;
         }
@@ -976,7 +910,6 @@ public class ModConfigSpec implements IConfigSpec {
             validate(hasComment(), "Non-empty comment when empty expected");
             validate(langKey, "Non-null translation key when null expected");
             validate(range, "Non-null range when null expected");
-            validate(restartType != RestartType.NONE, "Dangling restart value set to " + restartType);
         }
 
         private void validate(@Nullable Object value, String message) {
@@ -1080,7 +1013,6 @@ public class ModConfigSpec implements IConfigSpec {
         private final Class<?> clazz;
         private final Supplier<?> supplier;
         private final Predicate<Object> validator;
-        private final RestartType restartType;
 
         private ValueSpec(Supplier<?> supplier, Predicate<Object> validator, BuilderContext context, List<String> path) {
             Objects.requireNonNull(supplier, "Default supplier can not be null");
@@ -1089,7 +1021,6 @@ public class ModConfigSpec implements IConfigSpec {
             this.comment = context.hasComment() ? context.buildComment(path) : null;
             this.langKey = context.getTranslationKey();
             this.range = context.getRange();
-            this.restartType = context.restartType();
             this.clazz = context.getClazz();
             this.supplier = supplier;
             this.validator = validator;
@@ -1109,10 +1040,6 @@ public class ModConfigSpec implements IConfigSpec {
         @SuppressWarnings("unchecked")
         public <V extends Comparable<? super V>> Range<V> getRange() {
             return (Range<V>) this.range;
-        }
-
-        public RestartType restartType() {
-            return restartType;
         }
 
         @Nullable
@@ -1211,9 +1138,6 @@ public class ModConfigSpec implements IConfigSpec {
 
         /**
          * Returns the configured value for the configuration setting, throwing if the config has not yet been loaded.
-         * <p>
-         * This getter is cached, and will respect the {@link Builder#worldRestart() world restart} and {@link Builder#gameRestart() game restart}
-         * options by not clearing its cache if one of those options are set.
          *
          * @return the configured value for the setting
          * @throws NullPointerException  if the {@link ModConfigSpec config spec} object that will contain this has
@@ -1270,10 +1194,7 @@ public class ModConfigSpec implements IConfigSpec {
             var loadedConfig = spec.loadedConfig;
             Preconditions.checkNotNull(loadedConfig, "Cannot set config value without assigned Config object present");
             loadedConfig.config().set(path, value);
-
-            if (getSpec().restartType == RestartType.NONE) {
-                this.cachedValue = value;
-            }
+            this.cachedValue = value;
         }
 
         public ValueSpec getSpec() {
@@ -1377,39 +1298,4 @@ public class ModConfigSpec implements IConfigSpec {
         return Lists.newArrayList(DOT_SPLITTER.split(path));
     }
 
-    /**
-     * Used to prevent cached config values from being updated unless the game or the world is restarted.
-     */
-    @Deprecated
-    public enum RestartType {
-        /**
-         * Do not require a restart to update the cached config value.
-         */
-        NONE,
-        /**
-         * Require a world restart.
-         */
-        WORLD,
-        /**
-         * Require a game restart.
-         * <p>
-         * Cannot be used for {@linkplain ModConfig.Type#SERVER server configs}.
-         */
-        GAME(ModConfig.Type.SERVER);
-
-        private final Set<ModConfig.Type> invalidTypes;
-
-        RestartType(ModConfig.Type... invalidTypes) {
-            this.invalidTypes = EnumSet.noneOf(ModConfig.Type.class);
-            this.invalidTypes.addAll(Arrays.asList(invalidTypes));
-        }
-
-        private boolean isValid(ModConfig.Type type) {
-            return !invalidTypes.contains(type);
-        }
-
-        public RestartType with(RestartType other) {
-            return other == NONE ? this : (other == GAME || this == GAME) ? GAME : WORLD;
-        }
-    }
 }
