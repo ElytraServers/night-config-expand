@@ -1,11 +1,13 @@
 [versions]
 nightconfig = "3.9.0"
+slf4j = "2.0.19"
 
 [libraries]
 nightconfig-core = { module = "com.electronwill.night-config:core", version.ref = "nightconfig" }
 nightconfig-toml = { module = "com.electronwill.night-config:toml", version.ref = "nightconfig" }
 jspecify = { module = "org.jspecify:jspecify", version = "1.0.1" }
-slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.19" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 jetbrains-annotations = { module = "org.jetbrains:annotations", version = "26.1.0" }
 guava = { module = "com.google.guava:guava", version = "33.7.1-jre" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version = "3.20.0" }
