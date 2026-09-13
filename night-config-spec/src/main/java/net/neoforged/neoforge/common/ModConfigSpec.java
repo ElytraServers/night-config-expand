@@ -73,6 +73,10 @@ public class ModConfigSpec implements IConfigSpec {
         this.levelTranslationKeys = levelTranslationKeys;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     @Override
     public boolean isEmpty() {
         return this.spec.isEmpty();
