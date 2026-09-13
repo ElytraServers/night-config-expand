@@ -1,5 +1,6 @@
 plugins {
     java
+    `maven-publish`
 }
 
 repositories {
@@ -16,4 +17,15 @@ dependencies {
     implementation(libs.guava)
     implementation(libs.commons.lang3)
     implementation(libs.commons.io)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "cn.elytra.nightconfig"
+            artifactId = "night-config-spec"
+            version = project.version.toString()
+            from(components["java"])
+        }
+    }
 }

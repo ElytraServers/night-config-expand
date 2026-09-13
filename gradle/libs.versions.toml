@@ -12,3 +12,6 @@ jetbrains-annotations = { module = "org.jetbrains:annotations", version = "26.1.
 guava = { module = "com.google.guava:guava", version = "33.7.1-jre" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version = "3.20.0" }
 commons-io = { module = "commons-io:commons-io", version = "2.22.0" }
+
+[plugins]
+gitVersion = { id = "com.palantir.git-version", version = "5.1.0" }
