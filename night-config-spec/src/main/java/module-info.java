@@ -7,4 +7,8 @@ module cn.elytra.nightconfig.spec {
     requires org.jetbrains.annotations;
     requires org.jspecify;
     requires org.slf4j;
+
+    exports cn.elytra.nightconfig;
+    exports net.neoforged.fml.config;
+    exports net.neoforged.neoforge.common;
 }
