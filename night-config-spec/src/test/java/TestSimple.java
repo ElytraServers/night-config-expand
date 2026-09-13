@@ -12,7 +12,7 @@ public class TestSimple {
 
     private static final Logger log = LoggerFactory.getLogger(TestSimple.class);
 
-    static void main() throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException {
         var b = new ModConfigSpec.Builder();
         ModConfigSpec.BooleanValue foo = b
                 .comment("The FOO flag")

@@ -29,3 +29,9 @@ publishing {
         }
     }
 }
+
+tasks.test {
+    // we don't have unit tests yet,
+    // but the example test code will cause error on build task.
+    failOnNoDiscoveredTests = false
+}

@@ -15,6 +15,13 @@ val theVersion =
 allprojects {
     group = "cn.elytra.nightconfig"
     version = theVersion
+
+    plugins.withId("java") {
+        configure<JavaPluginExtension> {
+            withSourcesJar()
+            toolchain.languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
 }
 
 repositories {

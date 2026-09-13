@@ -581,13 +581,13 @@ public class ModConfigSpec implements IConfigSpec {
                 @Override
                 public Object correct(Object value) {
                     if (!(value instanceof List) || (getSizeRange() != null && !getSizeRange().test(((List<?>) value).size()))) {
-                        LOGGER.debug("List on key {} is deemed to need correction, as it is null, not a list, or the wrong size.", path.getLast());
+                        LOGGER.debug("List on key {} is deemed to need correction, as it is null, not a list, or the wrong size.", path.get(path.size() - 1));
                         return getDefault();
                     }
                     List<?> list = Lists.newArrayList((List<?>) value);
                     list.removeIf(elementValidator.negate());
                     if (list.isEmpty()) {
-                        LOGGER.debug("List on key {} is deemed to need correction. It failed validation.", path.getLast());
+                        LOGGER.debug("List on key {} is deemed to need correction. It failed validation.", path.get(path.size() - 1));
                         return getDefault();
                     }
                     return list;
@@ -815,7 +815,7 @@ public class ModConfigSpec implements IConfigSpec {
             if (count > currentPath.size())
                 throw new IllegalArgumentException("Attempted to pop " + count + " elements when we only had: " + currentPath);
             for (int x = 0; x < count; x++)
-                currentPath.removeLast();
+                currentPath.remove(currentPath.size() - 1);
             return this;
         }
 
