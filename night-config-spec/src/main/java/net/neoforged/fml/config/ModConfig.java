@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+@Deprecated
 public final class ModConfig {
     private final Type type;
     private final IConfigSpec spec;

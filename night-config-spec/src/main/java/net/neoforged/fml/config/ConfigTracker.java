@@ -41,6 +41,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * The configuration tracker manages various types of mod configurations.
  * Due to the parallel nature of mod initialization, modifying the configuration state must be <strong>thread-safe</strong>.
  */
+@Deprecated
 @ApiStatus.Internal
 public class ConfigTracker {
     public static final ConfigTracker INSTANCE = new ConfigTracker();

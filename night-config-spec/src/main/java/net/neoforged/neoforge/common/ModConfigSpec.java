@@ -103,6 +103,7 @@ public class ModConfigSpec implements IConfigSpec {
         this.afterReload();
     }
 
+    @Deprecated
     @Override
     public void validateSpec(ModConfig config) {
         forEachValue(getValues().valueMap().values(), configValue -> {
@@ -132,6 +133,16 @@ public class ModConfigSpec implements IConfigSpec {
 
     public UnmodifiableConfig getValues() {
         return this.values;
+    }
+
+    @ApiStatus.Internal
+    public void setLoadedConfig(@Nullable ILoadedConfig loadedConfig) {
+        this.loadedConfig = loadedConfig;
+    }
+
+    @ApiStatus.Internal
+    public @Nullable ILoadedConfig getLoadedConfig() {
+        return loadedConfig;
     }
 
     private void forEachValue(Iterable<Object> configValues, Consumer<ConfigValue<?>> consumer) {
@@ -273,19 +284,21 @@ public class ModConfigSpec implements IConfigSpec {
         return count;
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean stringsMatchNormalizingNewLines(@Nullable String string1, @Nullable String string2) {
         boolean blank1 = string1 == null || string1.isBlank();
         boolean blank2 = string2 == null || string2.isBlank();
         if (blank1 != blank2) {
             return false;
-        } else if (blank1 && blank2) {
+        } else if (blank1) {
             return true;
         } else {
-            return string1.replaceAll("\r\n", "\n")
-                    .equals(string2.replaceAll("\r\n", "\n"));
+            return string1.replace("\r\n", "\n")
+                    .equals(string2.replace("\r\n", "\n"));
         }
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     public static class Builder {
         private final Config spec = Config.of(LinkedHashMap::new, InMemoryFormat.withUniversalSupport()); // Use LinkedHashMap for consistent ordering
         private BuilderContext context = new BuilderContext();
@@ -855,7 +868,7 @@ public class ModConfigSpec implements IConfigSpec {
             if (count > currentPath.size())
                 throw new IllegalArgumentException("Attempted to pop " + count + " elements when we only had: " + currentPath);
             for (int x = 0; x < count; x++)
-                currentPath.remove(currentPath.size() - 1);
+                currentPath.removeLast();
             return this;
         }
 
@@ -897,7 +910,7 @@ public class ModConfigSpec implements IConfigSpec {
         }
 
         public boolean hasComment() {
-            return this.comment.size() > 0;
+            return !this.comment.isEmpty();
         }
 
         public String buildComment() {
@@ -950,7 +963,7 @@ public class ModConfigSpec implements IConfigSpec {
             return restartType;
         }
 
-        public void setClazz(Class<?> clazz) {
+        public void setClazz(@Nullable Class<?> clazz) {
             this.clazz = clazz;
         }
 
@@ -1035,6 +1048,7 @@ public class ModConfigSpec implements IConfigSpec {
         public Object correct(@Nullable Object value, Object def) {
             if (isNumber(value)) {
                 Number n = (Number) value;
+                assert n != null;
                 return n.doubleValue() < ((Number) min).doubleValue() ? min : n.doubleValue() > ((Number) max).doubleValue() ? max : value;
             }
             if (!clazz.isInstance(value)) return def;
@@ -1168,7 +1182,7 @@ public class ModConfigSpec implements IConfigSpec {
          * <p>
          * Only used by the UI!
          */
-        public Range<Integer> getSizeRange() {
+        public @Nullable Range<Integer> getSizeRange() {
             return sizeRange;
         }
     }
@@ -1297,7 +1311,7 @@ public class ModConfigSpec implements IConfigSpec {
 
         @Override
         public Integer getRaw(Config config, List<String> path, Supplier<Integer> defaultSupplier) {
-            return config.getIntOrElse(path, () -> defaultSupplier.get());
+            return config.getIntOrElse(path, defaultSupplier::get);
         }
 
         @Override
@@ -1313,7 +1327,7 @@ public class ModConfigSpec implements IConfigSpec {
 
         @Override
         public Long getRaw(Config config, List<String> path, Supplier<Long> defaultSupplier) {
-            return config.getLongOrElse(path, () -> defaultSupplier.get());
+            return config.getLongOrElse(path, defaultSupplier::get);
         }
 
         @Override
@@ -1366,6 +1380,7 @@ public class ModConfigSpec implements IConfigSpec {
     /**
      * Used to prevent cached config values from being updated unless the game or the world is restarted.
      */
+    @Deprecated
     public enum RestartType {
         /**
          * Do not require a restart to update the cached config value.

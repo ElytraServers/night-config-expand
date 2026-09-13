@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
+@Deprecated
 record LoadedConfig(CommentedConfig config, @Nullable Path path,
                     ModConfig modConfig) implements IConfigSpec.ILoadedConfig {
     @Override

@@ -10,6 +10,8 @@ import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.UnmodifiableCommentedConfig;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+
 /**
  * A config spec is responsible for interpreting (loading, correcting) raw {@link CommentedConfig}s from NightConfig.
  *
@@ -31,6 +33,7 @@ public interface IConfigSpec {
      *
      * @param config the configuration this spec is used by
      */
+    @Deprecated
     void validateSpec(ModConfig config);
 
     /**
@@ -61,7 +64,7 @@ public interface IConfigSpec {
      */
     void acceptConfig(@Nullable ILoadedConfig config);
 
-    sealed interface ILoadedConfig permits LoadedConfig {
+    sealed interface ILoadedConfig permits LoadedConfig, SimpleLoadedConfig {
         /**
          * Accesses the current config.
          *
@@ -69,6 +72,8 @@ public interface IConfigSpec {
          * read/write across multiple threads without additional synchronization.
          */
         CommentedConfig config();
+
+        @Nullable Path path();
 
         /**
          * Saves the current value of the {@link #config} and dispatches a config reloading event.
