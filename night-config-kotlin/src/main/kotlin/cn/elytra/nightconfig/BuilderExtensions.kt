@@ -19,3 +19,10 @@ inline fun ModConfigSpec.Builder.push(
     block()
     pop()
 }
+
+inline fun buildConfigSpec(block: ModConfigSpec.Builder.() -> Unit): ModConfigSpec {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    return ModConfigSpec.Builder().apply(block).build()
+}
