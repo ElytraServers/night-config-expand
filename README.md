@@ -2,6 +2,19 @@
 
 See also [night-config/README.md](https://github.com/TheElectronWill/night-config).
 
+## Usage
+
+```kotlin
+repositories {
+    maven("https://jitpack.io")
+}
+
+dependencies {
+    implementation("com.github.ElytraServers.night-config-expand:night-config-spec:${VERSION}")
+    implementation("com.github.ElytraServers.night-config-expand:night-config-kotlin:${VERSION}")
+}
+```
+
 ## Spec Module
 
 Spec module is ripped from NeoForge under LGPLv2.1 ([NeoForge/LICENSE.txt][nf-license]
