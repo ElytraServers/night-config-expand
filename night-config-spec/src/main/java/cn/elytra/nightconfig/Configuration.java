@@ -39,7 +39,8 @@ public final class Configuration {
     }
 
     public static void unloadConfig(IConfigSpec spec) {
-        if (spec instanceof ModConfigSpec modSpec) {
+        if (spec instanceof ModConfigSpec) {
+            ModConfigSpec modSpec = (ModConfigSpec) spec;
             IConfigSpec.ILoadedConfig loaded = modSpec.getLoadedConfig();
             if (loaded != null) {
                 Path loadedPath = loaded.path();
@@ -104,8 +105,8 @@ public final class Configuration {
     }
 
     private static ConcurrentCommentedConfig readConfig(Path path) throws IOException, ParsingException {
-        try (var reader = Files.newBufferedReader(path)) {
-            var config = new SynchronizedConfig(TomlFormat.instance(), LinkedHashMap::new);
+        try (java.io.BufferedReader reader = Files.newBufferedReader(path)) {
+            SynchronizedConfig config = new SynchronizedConfig(TomlFormat.instance(), LinkedHashMap::new);
             config.bulkCommentedUpdate(view -> {
                 new TomlParser().parse(reader, view, ParsingMode.REPLACE);
             });

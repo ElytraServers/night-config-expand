@@ -9,10 +9,12 @@ import com.electronwill.nightconfig.core.*;
 import com.electronwill.nightconfig.core.ConfigSpec.CorrectionAction;
 import com.electronwill.nightconfig.core.ConfigSpec.CorrectionListener;
 import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import net.neoforged.fml.config.IConfigSpec;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
@@ -129,9 +131,11 @@ public class ModConfigSpec implements IConfigSpec {
 
     private void forEachValue(Iterable<Object> configValues, Consumer<ConfigValue<?>> consumer) {
         configValues.forEach(value -> {
-            if (value instanceof ConfigValue<?> configValue) {
+            if (value instanceof ConfigValue<?>) {
+                ConfigValue<?> configValue = (ConfigValue<?>) value;
                 consumer.accept(configValue);
-            } else if (value instanceof Config innerConfig) {
+            } else if (value instanceof Config) {
+                Config innerConfig = (Config) value;
                 forEachValue(innerConfig.valueMap().values(), consumer);
             }
         });
@@ -254,8 +258,9 @@ public class ModConfigSpec implements IConfigSpec {
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean stringsMatchNormalizingNewLines(@Nullable String string1, @Nullable String string2) {
-        boolean blank1 = string1 == null || string1.isBlank();
-        boolean blank2 = string2 == null || string2.isBlank();
+
+        boolean blank1 = string1 == null || StringUtils.isBlank(string1);
+        boolean blank2 = string2 == null || StringUtils.isBlank(string2);
         if (blank1 != blank2) {
             return false;
         } else if (blank1) {
@@ -864,11 +869,11 @@ public class ModConfigSpec implements IConfigSpec {
         }
 
         public String buildComment() {
-            return buildComment(List.of("unknown", "unknown"));
+            return buildComment(Lists.newArrayList("unknown", "unknown"));
         }
 
         public String buildComment(final List<String> path) {
-            if (comment.stream().allMatch(String::isBlank)) {
+            if (comment.stream().allMatch(StringUtils::isBlank)) {
                 if (IS_PRODUCTION)
                     LOGGER.warn("Detected a comment that is all whitespace for config option {}, which causes obscure bugs in NeoForge's config system and will cause a crash in the future. Please report this to the mod author.",
                             DOT_JOINER.join(path));
@@ -1080,7 +1085,8 @@ public class ModConfigSpec implements IConfigSpec {
 
             this.newElementSupplier = newElementSupplier;
             this.elementValidator = elementValidator;
-            this.sizeRange = Objects.requireNonNullElse(sizeRange, MAX_ELEMENTS);
+
+            this.sizeRange = MoreObjects.firstNonNull(sizeRange, MAX_ELEMENTS);
         }
 
         /**
@@ -1163,7 +1169,7 @@ public class ModConfigSpec implements IConfigSpec {
          */
         public T getRaw() {
             Preconditions.checkNotNull(spec, "Cannot get config value before spec is built");
-            var loadedConfig = spec.loadedConfig;
+            ILoadedConfig loadedConfig = spec.loadedConfig;
             Preconditions.checkState(loadedConfig != null, "Cannot get config value before config is loaded.");
             return getRaw(loadedConfig.config(), path, defaultSupplier);
         }
@@ -1195,7 +1201,7 @@ public class ModConfigSpec implements IConfigSpec {
          */
         public void set(T value) {
             Preconditions.checkNotNull(spec, "Cannot set config value before spec is built");
-            var loadedConfig = spec.loadedConfig;
+            ILoadedConfig loadedConfig = spec.loadedConfig;
             Preconditions.checkNotNull(loadedConfig, "Cannot set config value without assigned Config object present");
             loadedConfig.config().set(path, value);
             this.cachedValue = value;

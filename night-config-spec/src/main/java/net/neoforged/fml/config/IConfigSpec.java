@@ -8,6 +8,7 @@ package net.neoforged.fml.config;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.UnmodifiableCommentedConfig;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -56,7 +57,8 @@ public interface IConfigSpec {
      */
     void acceptConfig(@Nullable ILoadedConfig config);
 
-    sealed interface ILoadedConfig permits LoadedConfig {
+    @ApiStatus.Internal
+    interface ILoadedConfig {
         /**
          * Accesses the current config.
          *

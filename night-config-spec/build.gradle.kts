@@ -3,6 +3,8 @@ plugins {
     `maven-publish`
 }
 
+java.toolchain.languageVersion = JavaLanguageVersion.of(8)
+
 repositories {
     mavenCentral()
 }
@@ -34,4 +36,10 @@ tasks.test {
     // we don't have unit tests yet,
     // but the example test code will cause error on build task.
     failOnNoDiscoveredTests = false
+}
+
+tasks.jar {
+    manifest {
+        attributes["Automatic-Module-Name"] = "cn.elytra.nightconfig.spec"
+    }
 }
