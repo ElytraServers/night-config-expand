@@ -105,6 +105,7 @@ public class ModConfigSpec implements IConfigSpec {
 
             config.save();
         }
+        resetCaches(0);
     }
 
     public boolean isLoaded() {
@@ -127,6 +128,23 @@ public class ModConfigSpec implements IConfigSpec {
     @ApiStatus.Internal
     public @Nullable ILoadedConfig getLoadedConfig() {
         return loadedConfig;
+    }
+
+    /// Reset all caches with the given flag.
+    ///
+    /// @param flag is used to test if the cached value should be cleaned this time.
+    ///             Given Minecraft as an example, if the value doesn't need updating before the world is closed,
+    ///             the update flag would contain the `WORLD`. And normally, the flag is 0, so it won't be updated.
+    ///             But once this function is called with `WORLD`, these values are cleared.
+    @ApiStatus.Internal
+    public void resetCaches(int flag) {
+        forEachValue(getValues().valueMap().values(), configValue -> {
+            int flags = configValue.getSpec().updateFlags;
+            // 0 for no restriction, otherwise check if the flag matches the requirement.
+            if (flags == 0 || (flags & flag) != 0) {
+                configValue.clearCache();
+            }
+        });
     }
 
     private void forEachValue(Iterable<Object> configValues, Consumer<ConfigValue<?>> consumer) {
@@ -798,6 +816,18 @@ public class ModConfigSpec implements IConfigSpec {
             return this;
         }
 
+        /// @param flags the integer flags that used to check if the cached value needs updating
+        public Builder updateFlags(int flags) {
+            context.setUpdateFlags(flags);
+            return this;
+        }
+
+        /// @param flag the integer flag that used to check if the cached value needs updating
+        public Builder withUpdateFlags(int flag) {
+            context.withUpdateFlags(flag);
+            return this;
+        }
+
         public Builder push(String path) {
             return push(split(path));
         }
@@ -850,6 +880,7 @@ public class ModConfigSpec implements IConfigSpec {
         private String langKey;
         @Nullable
         private Range<?> range;
+        private int updateFlags;
         @Nullable
         private Class<?> clazz;
 
@@ -904,6 +935,18 @@ public class ModConfigSpec implements IConfigSpec {
         @SuppressWarnings("unchecked")
         public <V extends Comparable<? super V>> Range<V> getRange() {
             return (Range<V>) this.range;
+        }
+
+        public void setUpdateFlags(int flags) {
+            this.updateFlags = flags;
+        }
+
+        public int getUpdateFlags() {
+            return this.updateFlags;
+        }
+
+        public void withUpdateFlags(int flag) {
+            setUpdateFlags(getUpdateFlags() | flag);
         }
 
         public void setClazz(@Nullable Class<?> clazz) {
@@ -1022,6 +1065,7 @@ public class ModConfigSpec implements IConfigSpec {
         private final Class<?> clazz;
         private final Supplier<?> supplier;
         private final Predicate<Object> validator;
+        private final int updateFlags;
 
         private ValueSpec(Supplier<?> supplier, Predicate<Object> validator, BuilderContext context, List<String> path) {
             Objects.requireNonNull(supplier, "Default supplier can not be null");
@@ -1030,6 +1074,7 @@ public class ModConfigSpec implements IConfigSpec {
             this.comment = context.hasComment() ? context.buildComment(path) : null;
             this.langKey = context.getTranslationKey();
             this.range = context.getRange();
+            this.updateFlags = context.getUpdateFlags();
             this.clazz = context.getClazz();
             this.supplier = supplier;
             this.validator = validator;
@@ -1204,7 +1249,9 @@ public class ModConfigSpec implements IConfigSpec {
             ILoadedConfig loadedConfig = spec.loadedConfig;
             Preconditions.checkNotNull(loadedConfig, "Cannot set config value without assigned Config object present");
             loadedConfig.config().set(path, value);
-            this.cachedValue = value;
+            if (getSpec().updateFlags == 0) {
+                this.cachedValue = value;
+            }
         }
 
         public ValueSpec getSpec() {
