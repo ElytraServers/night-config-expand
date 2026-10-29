@@ -1,10 +1,11 @@
 import cn.elytra.nightconfig.Configuration;
 import com.electronwill.nightconfig.core.EnumGetMethod;
+import com.google.common.collect.Lists;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.format.TextStyle;
 import java.util.List;
 
@@ -12,8 +13,9 @@ public class TestSimple {
 
     private static final Logger log = LoggerFactory.getLogger(TestSimple.class);
 
+    @SuppressWarnings({"ConditionalBreakInInfiniteLoop", "BusyWait"})
     public static void main(String[] args) throws InterruptedException {
-        var b = new ModConfigSpec.Builder();
+        ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         ModConfigSpec.BooleanValue foo = b
                 .comment("The FOO flag")
                 .translation("config.foo.key")
@@ -23,7 +25,7 @@ public class TestSimple {
                 .define("bar", 42);
         ModConfigSpec.ConfigValue<List<? extends String>> baz = b
                 .comment("The BAZ list of String")
-                .defineList("baz", List.of("Hello", "Bonjour"), String::new, String.class::isInstance);
+                .defineList("baz", Lists.newArrayList("Hello", "Bonjour"), String::new, String.class::isInstance);
         b.comment("This is a NESTED section?!").push("nest");
         ModConfigSpec.EnumValue<TextStyle> nestedEnum = b
                 .comment("Some random enum?")
@@ -34,7 +36,7 @@ public class TestSimple {
         b.pop();
         ModConfigSpec spec = b.build();
 
-        Configuration.openConfig(spec, Path.of("config", "1.toml"));
+        Configuration.openConfig(spec, Paths.get("config", "1.toml"));
 
         log.info("FOO {} BAR {} BAZ {} N_ENUM {} N_INT {}", foo.get(), bar.get(), String.join(",", baz.get()), nestedEnum.get().name(), nestedInt.get());
 
