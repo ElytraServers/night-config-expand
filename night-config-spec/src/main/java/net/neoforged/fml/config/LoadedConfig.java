@@ -1,6 +1,6 @@
 package net.neoforged.fml.config;
 
-import cn.elytra.nightconfig.Configuration;
+import cn.elytra.nightconfig.internal.ConfigurationImpl;
 import com.electronwill.nightconfig.core.CommentedConfig;
 
 import java.nio.file.Path;
@@ -26,6 +26,6 @@ public class LoadedConfig implements IConfigSpec.ILoadedConfig {
 
     @Override
     public void save() {
-        Configuration.writeConfig(path, config);
+        ConfigurationImpl.writeConfig(path, config);
     }
 }
