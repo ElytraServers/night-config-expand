@@ -5,17 +5,11 @@
 
 package net.neoforged.neoforge.common;
 
+import cn.elytra.nightconfig.internal.Utils;
 import com.electronwill.nightconfig.core.*;
 import com.electronwill.nightconfig.core.ConfigSpec.CorrectionAction;
 import com.electronwill.nightconfig.core.ConfigSpec.CorrectionListener;
-import com.google.common.base.Joiner;
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 import net.neoforged.fml.config.IConfigSpec;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -24,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.Collectors;
+
+import static cn.elytra.nightconfig.internal.Utils.*;
 
 /*
  * Like {@link com.electronwill.nightconfig.core.ConfigSpec} except in builder format, and extended to accept comments, language keys,
@@ -100,8 +96,8 @@ public class ModConfigSpec implements IConfigSpec {
             // This should not happen under normal circumstances, hence the warning.
             LOGGER.warn("Configuration {} is not correct. Correcting", config);
             correct(config.config(),
-                    (action, path, incorrectValue, correctedValue) -> LOGGER.warn("Incorrect key {} was corrected from {} to its default, {}. {}", DOT_JOINER.join(path), incorrectValue, correctedValue, incorrectValue == correctedValue ? "This seems to be an error." : ""),
-                    (action, path, incorrectValue, correctedValue) -> LOGGER.debug("The comment on key {} does not match the spec. This may create a backup.", DOT_JOINER.join(path)));
+                    (action, path, incorrectValue, correctedValue) -> LOGGER.warn("Incorrect key {} was corrected from {} to its default, {}. {}", String.join(".", path), incorrectValue, correctedValue, incorrectValue == correctedValue ? "This seems to be an error." : ""),
+                    (action, path, incorrectValue, correctedValue) -> LOGGER.debug("The comment on key {} does not match the spec. This may create a backup.", String.join(".", path)));
 
             config.save();
         }
@@ -163,7 +159,7 @@ public class ModConfigSpec implements IConfigSpec {
      * Saves the current config values to the config file, and fires the config reloading event.
      */
     public void save() {
-        Preconditions.checkNotNull(loadedConfig, "Cannot save config value without assigned Config object present");
+        Utils.checkNotNull(loadedConfig, "Cannot save config value without assigned Config object present");
         loadedConfig.save();
     }
 
@@ -277,8 +273,8 @@ public class ModConfigSpec implements IConfigSpec {
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean stringsMatchNormalizingNewLines(@Nullable String string1, @Nullable String string2) {
 
-        boolean blank1 = string1 == null || StringUtils.isBlank(string1);
-        boolean blank2 = string2 == null || StringUtils.isBlank(string2);
+        boolean blank1 = string1 == null || Utils.isBlank(string1);
+        boolean blank2 = string2 == null || Utils.isBlank(string2);
         if (blank1 != blank2) {
             return false;
         } else if (blank1) {
@@ -611,7 +607,7 @@ public class ModConfigSpec implements IConfigSpec {
                         LOGGER.debug("List on key {} is deemed to need correction, as it is null, not a list, or the wrong size.", path.get(path.size() - 1));
                         return getDefault();
                     }
-                    List<?> list = Lists.newArrayList((List<?>) value);
+                    List<?> list = newArrayListOf((List<?>) value);
                     list.removeIf(elementValidator.negate());
                     if (list.isEmpty()) {
                         LOGGER.debug("List on key {} is deemed to need correction. It failed validation.", path.get(path.size() - 1));
@@ -803,7 +799,7 @@ public class ModConfigSpec implements IConfigSpec {
             // Iterate list first, to throw meaningful errors
             // Don't add any comments until we make sure there is no nulls
             for (int i = 0; i < comment.length; i++)
-                Preconditions.checkNotNull(comment[i], "Comment string at " + i + " is null.");
+                Utils.checkNotNull(comment[i], "Comment string at " + i + " is null.");
 
             for (String s : comment)
                 context.addComment(s);
@@ -858,11 +854,6 @@ public class ModConfigSpec implements IConfigSpec {
             return this;
         }
 
-        public <T> Pair<T, ModConfigSpec> configure(Function<Builder, T> consumer) {
-            T o = consumer.apply(this);
-            return Pair.of(o, this.build());
-        }
-
         public ModConfigSpec build() {
             context.ensureEmpty();
             Config valueCfg = Config.of(Config.getDefaultMapCreator(true, true), InMemoryFormat.withSupport(ConfigValue.class::isAssignableFrom));
@@ -886,7 +877,7 @@ public class ModConfigSpec implements IConfigSpec {
 
         public void addComment(String value) {
             // Don't use `validate` because it throws IllegalStateException, not NullPointerException
-            Preconditions.checkNotNull(value, "Passed in null value for comment");
+            Utils.checkNotNull(value, "Passed in null value for comment");
 
             comment.add(value);
         }
@@ -900,21 +891,21 @@ public class ModConfigSpec implements IConfigSpec {
         }
 
         public String buildComment() {
-            return buildComment(Lists.newArrayList("unknown", "unknown"));
+            return buildComment(newArrayListOf("unknown", "unknown"));
         }
 
         public String buildComment(final List<String> path) {
-            if (comment.stream().allMatch(StringUtils::isBlank)) {
+            if (comment.stream().allMatch(Utils::isBlank)) {
                 if (IS_PRODUCTION)
                     LOGGER.warn("Detected a comment that is all whitespace for config option {}, which causes obscure bugs in NeoForge's config system and will cause a crash in the future. Please report this to the mod author.",
-                            DOT_JOINER.join(path));
+                            String.join(".", path));
                 else
-                    throw new IllegalStateException("Can not build comment for config option " + DOT_JOINER.join(path) + " as it comprises entirely of blank lines/whitespace. This is not allowed as it causes a \"constantly correcting config\" bug with NightConfig in NeoForge's config system.");
+                    throw new IllegalStateException("Can not build comment for config option " + String.join(".", path) + " as it comprises entirely of blank lines/whitespace. This is not allowed as it causes a \"constantly correcting config\" bug with NightConfig in NeoForge's config system.");
 
                 return "A developer of this mod has defined this config option with a blank comment, which causes obscure bugs in NeoForge's config system and will cause a crash in the future. Please report this to the mod author.";
             }
 
-            return LINE_JOINER.join(comment);
+            return String.join("\n", comment);
         }
 
         public void setTranslationKey(@Nullable String value) {
@@ -1131,7 +1122,7 @@ public class ModConfigSpec implements IConfigSpec {
             this.newElementSupplier = newElementSupplier;
             this.elementValidator = elementValidator;
 
-            this.sizeRange = MoreObjects.firstNonNull(sizeRange, MAX_ELEMENTS);
+            this.sizeRange = firstNonNullOf(sizeRange, MAX_ELEMENTS);
         }
 
         /**
@@ -1188,7 +1179,7 @@ public class ModConfigSpec implements IConfigSpec {
         }
 
         public List<String> getPath() {
-            return Lists.newArrayList(path);
+            return newArrayListOf(path);
         }
 
         /**
@@ -1213,9 +1204,9 @@ public class ModConfigSpec implements IConfigSpec {
          * <em>Do not call this for any other purpose than editing the value. Use {@link #get()} instead.</em>
          */
         public T getRaw() {
-            Preconditions.checkNotNull(spec, "Cannot get config value before spec is built");
+            Utils.checkNotNull(spec, "Cannot get config value before spec is built");
             ILoadedConfig loadedConfig = spec.loadedConfig;
-            Preconditions.checkState(loadedConfig != null, "Cannot get config value before config is loaded.");
+            checkState(loadedConfig != null, "Cannot get config value before config is loaded.");
             return getRaw(loadedConfig.config(), path, defaultSupplier);
         }
 
@@ -1235,8 +1226,8 @@ public class ModConfigSpec implements IConfigSpec {
         }
 
         public void save() {
-            Preconditions.checkNotNull(spec, "Cannot save config value before spec is built");
-            Preconditions.checkNotNull(spec.loadedConfig, "Cannot save config value without assigned Config object present");
+            Utils.checkNotNull(spec, "Cannot save config value before spec is built");
+            Utils.checkNotNull(spec.loadedConfig, "Cannot save config value without assigned Config object present");
             spec.save();
         }
 
@@ -1245,9 +1236,9 @@ public class ModConfigSpec implements IConfigSpec {
          * Make sure to call {@link ModConfigSpec#save()} eventually.
          */
         public void set(T value) {
-            Preconditions.checkNotNull(spec, "Cannot set config value before spec is built");
+            Utils.checkNotNull(spec, "Cannot set config value before spec is built");
             ILoadedConfig loadedConfig = spec.loadedConfig;
-            Preconditions.checkNotNull(loadedConfig, "Cannot set config value without assigned Config object present");
+            Utils.checkNotNull(loadedConfig, "Cannot set config value without assigned Config object present");
             loadedConfig.config().set(path, value);
             if (getSpec().updateFlags == 0) {
                 this.cachedValue = value;
@@ -1347,12 +1338,8 @@ public class ModConfigSpec implements IConfigSpec {
         }
     }
 
-    private static final Joiner LINE_JOINER = Joiner.on("\n");
-    private static final Joiner DOT_JOINER = Joiner.on(".");
-    private static final Splitter DOT_SPLITTER = Splitter.on(".");
-
     private static List<String> split(String path) {
-        return Lists.newArrayList(DOT_SPLITTER.split(path));
+        return newArrayListOf(path.split("\\.", -1));
     }
 
 }

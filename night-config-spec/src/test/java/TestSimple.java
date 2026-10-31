@@ -1,6 +1,5 @@
 import cn.elytra.nightconfig.Configuration;
 import com.electronwill.nightconfig.core.EnumGetMethod;
-import com.google.common.collect.Lists;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Paths;
 import java.time.format.TextStyle;
 import java.util.List;
+
+import static cn.elytra.nightconfig.internal.Utils.newArrayListOf;
 
 public class TestSimple {
 
@@ -25,7 +26,7 @@ public class TestSimple {
                 .define("bar", 42);
         ModConfigSpec.ConfigValue<List<? extends String>> baz = b
                 .comment("The BAZ list of String")
-                .defineList("baz", Lists.newArrayList("Hello", "Bonjour"), String::new, String.class::isInstance);
+                .defineList("baz", newArrayListOf("Hello", "Bonjour"), String::new, String.class::isInstance);
         b.comment("This is a NESTED section?!").push("nest");
         ModConfigSpec.EnumValue<TextStyle> nestedEnum = b
                 .comment("Some random enum?")

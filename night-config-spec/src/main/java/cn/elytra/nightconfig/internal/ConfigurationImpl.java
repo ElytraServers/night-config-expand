@@ -14,7 +14,6 @@ import com.electronwill.nightconfig.toml.TomlParser;
 import com.electronwill.nightconfig.toml.TomlWriter;
 import net.neoforged.fml.config.IConfigSpec;
 import net.neoforged.fml.config.LoadedConfig;
-import org.apache.commons.io.FilenameUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -114,8 +113,9 @@ public final class ConfigurationImpl {
 
     private static void backUpConfig(Path path) {
         Path bakFileLocation = path.getParent();
-        String bakFileName = FilenameUtils.removeExtension(path.getFileName().toString());
-        String bakFileExtension = FilenameUtils.getExtension(path.getFileName().toString()) + ".bak";
+        String[] s = Utils.getFileNameAndExtension(path);
+        String bakFileName = s[0];
+        String bakFileExtension = s[1] + ".bak";
         Path bakFile = bakFileLocation.resolve(bakFileName + "-1" + "." + bakFileExtension);
         int maxBackups = 5; // const
         try {
